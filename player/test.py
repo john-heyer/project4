@@ -12,7 +12,7 @@ for i, l1 in enumerate(lines1):
 	if "microsec" in l1:
 		nodes1 = int(re.findall("nodes\s\d", l1)[0].split(" ")[-1])
 		nodes2 = int(re.findall("nodes\s\d", l2)[0].split(" ")[-1])
-		if (nodes1 != nodes2): # it's fine if nps or other things do not much
+		if (nodes1 != nodes2): # it's fine if nps or other things do not match
 			bad = True
 			print(nodes1)
 			print(nodes2)
