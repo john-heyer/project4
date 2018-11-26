@@ -1,0 +1,12 @@
+setoption name reset_rng value 1
+position startpos moves h0g1 b3R
+go depth 4
+move g4L
+go depth 4 
+move b3U
+go depth 4
+move d1c2
+go depth 4
+move b4c3
+go depth 4
+quit
