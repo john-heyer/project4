@@ -478,9 +478,10 @@ void low_level_make_move(position_t* old, position_t* p, move_t mv) {
     DEBUG_LOG(1, "low_level_make_move: %s\n", buf);
   });
 
+  /*
   tbassert(old->key == compute_zob_key(old),
            "old->key: %"PRIu64", zob-key: %"PRIu64"\n",
-           old->key, compute_zob_key(old));
+           old->key, compute_zob_key(old));*/
 
   WHEN_DEBUG_VERBOSE({
     fprintf(stderr, "Before:\n");
@@ -607,9 +608,10 @@ void low_level_make_move(position_t* old, position_t* p, move_t mv) {
   // Increment ply
   p->ply++;
 
+  /*
   tbassert(p->key == compute_zob_key(p),
            "p->key: %"PRIu64", zob-key: %"PRIu64"\n",
-           p->key, compute_zob_key(p));
+           p->key, compute_zob_key(p));*/
 
   WHEN_DEBUG_VERBOSE({
     fprintf(stderr, "After:\n");
@@ -644,9 +646,10 @@ victims_t make_move(position_t* old, position_t* p, move_t mv) {
     p->board[victim_sq] = 0;
     p->key ^= zob[victim_sq][0];
 
+    /*
     tbassert(p->key == compute_zob_key(p),
              "p->key: %"PRIu64", zob-key: %"PRIu64"\n",
-             p->key, compute_zob_key(p));
+             p->key, compute_zob_key(p));*/
 
     WHEN_DEBUG_VERBOSE({
       square_to_str(victim_sq, buf, MAX_CHARS_IN_MOVE);
