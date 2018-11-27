@@ -24,7 +24,7 @@
 
 // The board (which is 8x8 or 10x10) is centered in a 16x16 array, with the
 // excess height and width being used for sentinels.
-#define ARR_WIDTH 16
+#define ARR_WIDTH 10
 #define ARR_SIZE (ARR_WIDTH * ARR_WIDTH)
 
 // Board is 8 x 8 or 10 x 10
@@ -237,16 +237,36 @@ static inline square_t square_of(fil_t f, rnk_t r) {
 }
 
 // Finds file of square
-static inline fil_t fil_of(square_t sq) {
+static inline fil_t fil_of_reference(square_t sq) {
   fil_t f = ((sq >> FIL_SHIFT) & FIL_MASK) - FIL_ORIGIN;
   DEBUG_LOG(1, "File of square %d is %d\n", sq, f);
   return f;
 }
 
+// Finds file of square
+static inline fil_t fil_of(square_t sq) {
+  fil_t f = ((sq) / ARR_WIDTH - FIL_ORIGIN);
+  DEBUG_LOG(1, "File of square %d is %d\n", sq, f);
+  // N.B. This regression is incorrect for 10x10 board, only correct for 16x16 board
+  // tbassert(((fil_t) f) == fil_of_reference(sq),
+  //  "REGRESSION FAILURE! %d != %d !!\n", ((fil_t) f) ,fil_of_reference(sq));
+  return f;
+}
+
 // Finds rank of square
-static inline rnk_t rnk_of(square_t sq) {
+static inline rnk_t rnk_of_reference(square_t sq) {
   rnk_t r = ((sq >> RNK_SHIFT) & RNK_MASK) - RNK_ORIGIN;
   DEBUG_LOG(1, "Rank of square %d is %d\n", sq, r);
+  return r;
+}
+
+// Finds rank of square
+static inline rnk_t rnk_of(square_t sq) {
+  rnk_t r = ((sq) % ARR_WIDTH - RNK_ORIGIN);
+  DEBUG_LOG(1, "Rank of square %d is %d\n", sq, r);
+  // N.B. This regression is incorrect for 10x10 board, only correct for 16x16 board
+  // tbassert(((rnk_t) r) == rnk_of_reference(sq),
+  //  "REGRESSION FAILURE! %d != %d !!\n", ((rnk_t) r) ,rnk_of_reference(sq));
   return r;
 }
 
