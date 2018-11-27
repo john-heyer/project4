@@ -9,6 +9,8 @@
 #include "./move_gen.h"
 #include "./tbassert.h"
 
+#define ptype_of ptype_of_local
+
 // -----------------------------------------------------------------------------
 // Evaluation
 // -----------------------------------------------------------------------------
@@ -27,6 +29,10 @@ int LCOVERAGE;
 
 // Heuristics for static evaluation - described in the google doc
 // mentioned in the handout.
+
+static inline ptype_t ptype_of_local(piece_t x) {
+  return (ptype_t)((x >> PTYPE_SHIFT) & PTYPE_MASK);
+}
 
 // PCENTRAL heuristic: Bonus for Pawn near center of board
 ev_score_t pcentral(fil_t f, rnk_t r) {
@@ -184,8 +190,10 @@ void add_laser_path(position_t* p, color_t c, float* laser_map) {
            "ptype: %d\n", ptype_of(p->board[sq]));
   // laser_map[sq] += touch_weight;
 
+  int beam[4] = {1, ARR_WIDTH, -1, -ARR_WIDTH};
+
   while (true) {
-    sq += beam_of(bdir);
+    sq += beam[bdir];
 
     // set laser map to min
     if(laser_map[sq] > length) {
@@ -240,13 +248,11 @@ int manhattan_dist(square_t a, square_t b) {
   return delta_fil + delta_rnk;
 }
 
-float laser_coverage(position_t* p, color_t color) {
+float laser_coverage(position_t* p, float * coverage_map, color_t color) {
   position_t np;
   sortable_move_t moves[MAX_NUM_MOVES];
   int num_moves = generate_all_with_color(p, moves, color);
   int i;
-
-  float coverage_map[ARR_SIZE];
 
   // initialization
   for (int i = 0; i < ARR_SIZE; ++i) {
@@ -263,7 +269,7 @@ float laser_coverage(position_t* p, color_t color) {
   }
 
   // get square of opposing king
-  square_t king_sq = p->kloc[color];
+  // square_t king_sq = p->kloc[color];
   // get square of opposing king
   square_t opp_king_sq = p->kloc[opp_color(color)];
 
@@ -271,22 +277,24 @@ float laser_coverage(position_t* p, color_t color) {
   // initialize laser map
   float result = 0;
 
+  /*
   // add in everything on board
   for (fil_t f = 0; f < BOARD_WIDTH; ++f) {
     for (rnk_t r = 0; r < BOARD_WIDTH; ++r) {
-      if (coverage_map[square_of(f, r)] < FLT_MAX) {
+      int sq = square_of(f, r);
+      if (coverage_map[sq] < FLT_MAX) {
         // length of path divided by length of shortest possible path
-        tbassert(manhattan_dist(king_sq, square_of(f, r)) <= coverage_map[square_of(f, r)], "f: %d, r: %d, dist = %d, map: %f\n", f, r, manhattan_dist(king_sq, square_of(f, r)), coverage_map[square_of(f, r)]);
+        tbassert(manhattan_dist(king_sq, sq) <= coverage_map[sq], "f: %d, r: %d, dist = %d, map: %f\n", f, r, manhattan_dist(king_sq, sq), coverage_map[sq]);
 
         // printf("before: %f, dist: %d\n", coverage_map[square_of(f, r)], manhattan_dist(king_sq, square_of(f, r)));
-        coverage_map[square_of(f, r)] = ((manhattan_dist(king_sq, square_of(f, r))) / (coverage_map[square_of(f, r)]));
+        coverage_map[square_of(f, r)] = ((manhattan_dist(king_sq, sq)) / (coverage_map[sq]));
 
-        tbassert(mult_dist(square_of(f, r), opp_king_sq) > 0, "mult_distance must be positive");
-        coverage_map[square_of(f, r)] *= mult_dist(square_of(f, r), opp_king_sq);
-        result += coverage_map[square_of(f, r)];
+        tbassert(mult_dist(sq, opp_king_sq) > 0, "mult_distance must be positive");
+        coverage_map[sq] *= mult_dist(sq, opp_king_sq);
+        result += coverage_map[sq];
       }
     }
-  }
+  }*/
 
   // add in off-board weights
   // add in top row
@@ -376,9 +384,44 @@ score_t eval(position_t* p, bool verbose) {
   ev_score_t bonus;
   char buf[MAX_CHARS_IN_MOVE];
 
+  float coverage_map_w[ARR_SIZE];
+  float coverage_map_b[ARR_SIZE];
+
+  float w_cov = laser_coverage(p, coverage_map_w, WHITE);
+  float b_cov = laser_coverage(p, coverage_map_b, BLACK);
+
+  // get square of white king, black king
+  square_t white_king_sq = p->kloc[WHITE];
+  square_t black_king_sq = p->kloc[BLACK];
+
   for (fil_t f = 0; f < BOARD_WIDTH; f++) {
     for (rnk_t r = 0; r < BOARD_WIDTH; r++) {
       square_t sq = square_of(f, r);
+
+      // deal with white coverage map, black coverage map
+      if (coverage_map_w[sq] < FLT_MAX) {
+        // length of path divided by length of shortest possible path
+        tbassert(manhattan_dist(white_king_sq, sq) <= coverage_map_w[sq], "f: %d, r: %d, dist = %d, map: %f\n", f, r, manhattan_dist(white_king_sq, sq), coverage_map_w[sq]);
+
+        // printf("before: %f, dist: %d\n", coverage_map[square_of(f, r)], manhattan_dist(king_sq, square_of(f, r)));
+        coverage_map_w[sq] = ((manhattan_dist(white_king_sq, sq)) / (coverage_map_w[sq]));
+
+        tbassert(mult_dist(sq, black_king_sq) > 0, "mult_distance must be positive");
+        coverage_map_w[sq] *= mult_dist(sq, black_king_sq);
+        w_cov += coverage_map_w[sq];
+      }
+      if (coverage_map_b[sq] < FLT_MAX) {
+        // length of path divided by length of shortest possible path
+        tbassert(manhattan_dist(black_king_sq, sq) <= coverage_map_b[sq], "f: %d, r: %d, dist = %d, map: %f\n", f, r, manhattan_dist(black_king_sq, sq), coverage_map_b[sq]);
+
+        // printf("before: %f, dist: %d\n", coverage_map[square_of(f, r)], manhattan_dist(king_sq, square_of(f, r)));
+        coverage_map_b[sq] = ((manhattan_dist(black_king_sq, sq)) / (coverage_map_b[sq]));
+
+        tbassert(mult_dist(sq, white_king_sq) > 0, "mult_distance must be positive");
+        coverage_map_b[sq] *= mult_dist(sq, white_king_sq);
+        b_cov += coverage_map_b[sq];
+      }
+
       piece_t x = p->board[sq];
       color_t c = color_of(x);
       if (verbose) {
@@ -436,12 +479,12 @@ score_t eval(position_t* p, bool verbose) {
   }
 
   // LASER_COVERAGE heuristic
-  float w_coverage = LCOVERAGE * laser_coverage(p, WHITE);
+  float w_coverage = LCOVERAGE * w_cov;
   score[WHITE] += (int) w_coverage;
   if (verbose) {
     printf("COVERAGE bonus %d for White\n",(int) w_coverage);
   }
-  float b_coverage = LCOVERAGE * laser_coverage(p, BLACK);
+  float b_coverage = LCOVERAGE * b_cov;
   score[BLACK] += (int) b_coverage;
   if (verbose) {
     printf("COVERAGE bonus %d for Black\n",(int) b_coverage);
