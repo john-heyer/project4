@@ -245,8 +245,9 @@ static inline fil_t fil_of_reference(square_t sq) {
 
 // Finds file of square
 static inline fil_t fil_of(square_t sq) {
-  fil_t f = ((sq) / ARR_WIDTH - FIL_ORIGIN);
+  fil_t f = sq / ARR_WIDTH - FIL_ORIGIN;
   DEBUG_LOG(1, "File of square %d is %d\n", sq, f);
+
   // N.B. This regression is incorrect for 10x10 board, only correct for 16x16 board
   // tbassert(((fil_t) f) == fil_of_reference(sq),
   //  "REGRESSION FAILURE! %d != %d !!\n", ((fil_t) f) ,fil_of_reference(sq));
@@ -262,7 +263,7 @@ static inline rnk_t rnk_of_reference(square_t sq) {
 
 // Finds rank of square
 static inline rnk_t rnk_of(square_t sq) {
-  rnk_t r = ((sq) % ARR_WIDTH - RNK_ORIGIN);
+  rnk_t r = sq % ARR_WIDTH - RNK_ORIGIN;
   DEBUG_LOG(1, "Rank of square %d is %d\n", sq, r);
   // N.B. This regression is incorrect for 10x10 board, only correct for 16x16 board
   // tbassert(((rnk_t) r) == rnk_of_reference(sq),
