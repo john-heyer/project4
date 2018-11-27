@@ -29,6 +29,7 @@ int LCOVERAGE;
 // Heuristics for static evaluation - described in the google doc
 // mentioned in the handout.
 
+// Uses script pcentral.py to generate this table
 static double pcentral_table[8][8] = {
   {0.2500000000000000, 0.3626225608009018, 0.4409830056250524, 0.4696699141100893, 0.4696699141100893, 0.4409830056250524, 0.3626225608009018, 0.2500000000000000},
   {0.3626225608009018, 0.4999999999999999, 0.6047152924789525, 0.6464466094067263, 0.6464466094067263, 0.6047152924789525, 0.4999999999999999, 0.3626225608009018},
@@ -40,20 +41,27 @@ static double pcentral_table[8][8] = {
   {0.2500000000000000, 0.3626225608009018, 0.4409830056250524, 0.4696699141100893, 0.4696699141100893, 0.4409830056250524, 0.3626225608009018, 0.2500000000000000}
 };
 
+// PCENTRAL heuristic: Bonus for Pawn near center of board
+ev_score_t pcentral_reference(fil_t f, rnk_t r) {
+  double df = BOARD_WIDTH / 2 - f - 1;
+  if (df < 0) {
+    df = f - BOARD_WIDTH / 2;
+  }
+  double dr = BOARD_WIDTH / 2 - r - 1;
+  if (dr < 0) {
+    dr = r - BOARD_WIDTH / 2;
+  }
+  double bonus = 1 - sqrt(df * df + dr * dr) / (BOARD_WIDTH / sqrt(2));
+  // printf("bonus\n");
+  // printf("%f\n", bonus);
+  return PCENTRAL * bonus;
+}
 
 // PCENTRAL heuristic: Bonus for Pawn near center of board
 ev_score_t pcentral(fil_t f, rnk_t r) {
-  // double df = BOARD_WIDTH / 2 - f - 1;
-  // if (df < 0) {
-  //   df = f - BOARD_WIDTH / 2;
-  // }
-  // double dr = BOARD_WIDTH / 2 - r - 1;
-  // if (dr < 0) {
-  //   dr = r - BOARD_WIDTH / 2;
-  // }
-  // double bonus = 1 - sqrt(df * df + dr * dr) / (BOARD_WIDTH / sqrt(2));
-  // printf("bonus\n");
-  // printf("%f\n", bonus);
+  // Regression Test
+  tbassert(((ev_score_t) (PCENTRAL * pcentral_table[f][r])) == pcentral_reference(f,r),
+   "REGRESSION FAILURE! %d != %d !!\n", (ev_score_t) (PCENTRAL * pcentral_table[f][r]), pcentral_reference(f,r));
   return PCENTRAL * pcentral_table[f][r];
 }
 
@@ -253,17 +261,6 @@ float mult_dist_table[10][10] = {
   {0.100000, 0.050000, 0.033333, 0.025000, 0.020000, 0.016667, 0.014286, 0.012500, 0.011111, 0.010000}
 };
 
-float mult_dist(square_t a, square_t b) {
-  float delta_fil = abs(fil_of(a) - fil_of(b));
-  float delta_rnk = abs(rnk_of(a) - rnk_of(b));
-  if (delta_fil == 0 && delta_rnk == 0) {
-    return 2;
-  }
-  // float x = ( 1 / ( delta_fil + 1 ) ) * ( 1 / ( delta_rnk + 1 ) );
-  float x = mult_dist_table[(int)delta_rnk][(int)delta_fil];
-  return x;
-}
-
 float mult_dist_reference(square_t a, square_t b) {
   float delta_fil = abs(fil_of(a) - fil_of(b));
   float delta_rnk = abs(rnk_of(a) - rnk_of(b));
@@ -271,6 +268,18 @@ float mult_dist_reference(square_t a, square_t b) {
     return 2;
   }
   float x = ( 1 / ( delta_fil + 1 ) ) * ( 1 / ( delta_rnk + 1 ) );
+  return x;
+}
+
+float mult_dist(square_t a, square_t b) {
+  float delta_fil = abs(fil_of(a) - fil_of(b));
+  float delta_rnk = abs(rnk_of(a) - rnk_of(b));
+  if (delta_fil == 0 && delta_rnk == 0) {
+    return 2;
+  }
+  float x = mult_dist_table[(int)delta_rnk][(int)delta_fil];
+    tbassert(fabsf(x - mult_dist_reference(a, b)) < 0.0001,
+     "REGRESSION FAILURE %f %f!!\n", x, mult_dist_reference(a, b));
   return x;
 }
 
@@ -589,8 +598,8 @@ score_t eval(position_t* p, bool verbose) {
   }
 
   // LASER_COVERAGE heuristic
-  tbassert(fabsf(w_cov - laser_coverage_reference(p, WHITE)) < 0.0001, "WRONG %f %f!!\n", w_cov, laser_coverage_reference(p, WHITE));
-  tbassert(fabsf(b_cov - laser_coverage_reference(p, BLACK)) < 0.0001, "WRONG %f %f!!\n", b_cov, laser_coverage_reference(p, BLACK));
+  tbassert(fabsf(w_cov - laser_coverage_reference(p, WHITE)) < 0.0001, "REGRESSION FAILURE %f %f!!\n", w_cov, laser_coverage_reference(p, WHITE));
+  tbassert(fabsf(b_cov - laser_coverage_reference(p, BLACK)) < 0.0001, "REGRESSION FAILURE %f %f!!\n", b_cov, laser_coverage_reference(p, BLACK));
   float w_coverage = LCOVERAGE * w_cov;
   score[WHITE] += (int) w_coverage;
   if (verbose) {
