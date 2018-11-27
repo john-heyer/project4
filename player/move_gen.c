@@ -20,9 +20,9 @@
 
 int USE_KO;  // Respect the Ko rule
 
-static char* color_strs[2] = {"White", "Black"};
+static const char* color_strs[2] = {"White", "Black"};
 
-char* color_to_str(color_t c) {
+const char* color_to_str(color_t c) {
   return color_strs[c];
 }
 
@@ -30,52 +30,7 @@ char* color_to_str(color_t c) {
 // Piece getters and setters (including color, ptype, orientation)
 // -----------------------------------------------------------------------------
 
-// which color is moving next
-color_t color_to_move_of(position_t* p) {
-  if ((p->ply & 1) == 0) {
-    return WHITE;
-  } else {
-    return BLACK;
-  }
-}
-
-color_t color_of(piece_t x) {
-  return (color_t)((x >> COLOR_SHIFT) & COLOR_MASK);
-}
-
-color_t opp_color(color_t c) {
-  if (c == WHITE) {
-    return BLACK;
-  } else {
-    return WHITE;
-  }
-}
-
-
-void set_color(piece_t* x, color_t c) {
-  tbassert((c >= 0) & (c <= COLOR_MASK), "color: %d\n", c);
-  *x = ((c & COLOR_MASK) << COLOR_SHIFT) |
-       (*x & ~(COLOR_MASK << COLOR_SHIFT));
-}
-
-
-ptype_t ptype_of(piece_t x) {
-  return (ptype_t)((x >> PTYPE_SHIFT) & PTYPE_MASK);
-}
-
-void set_ptype(piece_t* x, ptype_t pt) {
-  *x = ((pt & PTYPE_MASK) << PTYPE_SHIFT) |
-       (*x & ~(PTYPE_MASK << PTYPE_SHIFT));
-}
-
-int ori_of(piece_t x) {
-  return (x >> ORI_SHIFT) & ORI_MASK;
-}
-
-void set_ori(piece_t* x, int ori) {
-  *x = ((ori & ORI_MASK) << ORI_SHIFT) |
-       (*x & ~(ORI_MASK << ORI_SHIFT));
-}
+// MADE STATIC INLINE AND MOVED TO HEADER FILE, see move_gen.h
 
 // -----------------------------------------------------------------------------
 // Piece orientation strings
@@ -137,38 +92,7 @@ void init_zob() {
 // Squares
 // -----------------------------------------------------------------------------
 
-// For no square, use 0, which is guaranteed to be off board
-square_t square_of(fil_t f, rnk_t r) {
-  square_t s = ARR_WIDTH * (FIL_ORIGIN + f) + RNK_ORIGIN + r;
-  DEBUG_LOG(1, "Square of (file %d, rank %d) is %d\n", f, r, s);
-  tbassert((s >= 0) && (s < ARR_SIZE), "s: %d\n", s);
-  return s;
-}
-
-// Finds file of square
-fil_t fil_of(square_t sq) {
-  fil_t f = ((sq >> FIL_SHIFT) & FIL_MASK) - FIL_ORIGIN;
-  DEBUG_LOG(1, "File of square %d is %d\n", sq, f);
-  return f;
-}
-
-// Finds rank of square
-rnk_t rnk_of(square_t sq) {
-  rnk_t r = ((sq >> RNK_SHIFT) & RNK_MASK) - RNK_ORIGIN;
-  DEBUG_LOG(1, "Rank of square %d is %d\n", sq, r);
-  return r;
-}
-
-// converts a square to string notation, returns number of characters printed
-int square_to_str(square_t sq, char* buf, size_t bufsize) {
-  fil_t f = fil_of(sq);
-  rnk_t r = rnk_of(sq);
-  if (f >= 0) {
-    return snprintf(buf, bufsize, "%c%d", 'a' + f, r);
-  } else  {
-    return snprintf(buf, bufsize, "%c%d", 'z' + f + 1, r);
-  }
-}
+// MADE STATIC INLINE AND MOVED TO HEADER FILE, see move_gen.h
 
 // -----------------------------------------------------------------------------
 // Board direction and laser direction
@@ -478,9 +402,10 @@ void low_level_make_move(position_t* old, position_t* p, move_t mv) {
     DEBUG_LOG(1, "low_level_make_move: %s\n", buf);
   });
 
+  /*
   tbassert(old->key == compute_zob_key(old),
            "old->key: %"PRIu64", zob-key: %"PRIu64"\n",
-           old->key, compute_zob_key(old));
+           old->key, compute_zob_key(old));*/
 
   WHEN_DEBUG_VERBOSE({
     fprintf(stderr, "Before:\n");
@@ -607,9 +532,10 @@ void low_level_make_move(position_t* old, position_t* p, move_t mv) {
   // Increment ply
   p->ply++;
 
+  /*
   tbassert(p->key == compute_zob_key(p),
            "p->key: %"PRIu64", zob-key: %"PRIu64"\n",
-           p->key, compute_zob_key(p));
+           p->key, compute_zob_key(p));*/
 
   WHEN_DEBUG_VERBOSE({
     fprintf(stderr, "After:\n");
@@ -644,9 +570,10 @@ victims_t make_move(position_t* old, position_t* p, move_t mv) {
     p->board[victim_sq] = 0;
     p->key ^= zob[victim_sq][0];
 
+    /*
     tbassert(p->key == compute_zob_key(p),
              "p->key: %"PRIu64", zob-key: %"PRIu64"\n",
-             p->key, compute_zob_key(p));
+             p->key, compute_zob_key(p));*/
 
     WHEN_DEBUG_VERBOSE({
       square_to_str(victim_sq, buf, MAX_CHARS_IN_MOVE);
