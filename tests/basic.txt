@@ -1,5 +1,4 @@
 cpus = 12
-book = ../tests/book.dta
 game_rounds = 500
 title = basic
 adjudicate = 400

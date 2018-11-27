@@ -447,6 +447,18 @@ score_t eval(position_t* p, bool verbose) {
     printf("COVERAGE bonus %d for Black\n",(int) b_coverage);
   }
 
+  // MOBILITY heuristic
+  int w_mobility = MOBILITY * mobility(p, WHITE);
+  score[WHITE] += w_mobility;
+  if (verbose) {
+    printf("MOBILITY bonus %d for White\n", w_mobility);
+  }
+  int b_mobility = MOBILITY * mobility(p, BLACK);
+  score[BLACK] += b_mobility;
+  if (verbose) {
+    printf("MOBILITY bonus %d for Black\n", b_mobility);
+  }
+
   // score from WHITE point of view
   ev_score_t tot = score[WHITE] - score[BLACK];
 

@@ -6,6 +6,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "./tbassert.h"
+#include "./util.h"
 
 // The MAX_NUM_MOVES is just an estimate
 #define MAX_NUM_MOVES 1024      // real number = 8 * (3 + 8 + 8 * (7 + 3)) = 728
@@ -46,7 +48,7 @@ typedef int fil_t;
 
 #define PIECE_SIZE 5  // Number of bits in (ptype, color, orientation)
 
-typedef int piece_t;
+typedef uint8_t piece_t;
 
 // -----------------------------------------------------------------------------
 // Piece types
@@ -162,23 +164,102 @@ typedef struct position {
 // Function prototypes
 // -----------------------------------------------------------------------------
 
-char* color_to_str(color_t c);
-color_t color_to_move_of(position_t* p);
-color_t color_of(piece_t x);
-color_t opp_color(color_t c);
-void set_color(piece_t* x, color_t c);
-ptype_t ptype_of(piece_t x);
-void set_ptype(piece_t* x, ptype_t pt);
-int ori_of(piece_t x);
-void set_ori(piece_t* x, int ori);
+const char* color_to_str(color_t c);
+// Original prototypes before static inlining
+// color_t color_of(piece_t x);
+// color_t opp_color(color_t c);
+// void set_color(piece_t* x, color_t c);
+// ptype_t ptype_of(piece_t x);
+// void set_ptype(piece_t* x, ptype_t pt);
+// int ori_of(piece_t x);
+// void set_ori(piece_t* x, int ori);
+
+// which color is moving next
+static inline color_t color_to_move_of(position_t* p) {
+  if ((p->ply & 1) == 0) {
+    return WHITE;
+  } else {
+    return BLACK;
+  }
+}
+
+static inline color_t color_of(piece_t x) {
+  return (color_t)((x >> COLOR_SHIFT) & COLOR_MASK);
+}
+
+static inline color_t opp_color(color_t c) {
+  if (c == WHITE) {
+    return BLACK;
+  } else {
+    return WHITE;
+  }
+}
+
+static inline void set_color(piece_t* x, color_t c) {
+  tbassert((c >= 0) & (c <= COLOR_MASK), "color: %d\n", c);
+  *x = ((c & COLOR_MASK) << COLOR_SHIFT) |
+       (*x & ~(COLOR_MASK << COLOR_SHIFT));
+}
+
+static inline ptype_t ptype_of(piece_t x) {
+  return (ptype_t)((x >> PTYPE_SHIFT) & PTYPE_MASK);
+}
+
+static inline void set_ptype(piece_t* x, ptype_t pt) {
+  *x = ((pt & PTYPE_MASK) << PTYPE_SHIFT) |
+       (*x & ~(PTYPE_MASK << PTYPE_SHIFT));
+}
+
+static inline int ori_of(piece_t x) {
+  return (x >> ORI_SHIFT) & ORI_MASK;
+}
+
+static inline void set_ori(piece_t* x, int ori) {
+  *x = ((ori & ORI_MASK) << ORI_SHIFT) |
+       (*x & ~(ORI_MASK << ORI_SHIFT));
+}
 
 void init_zob();
 uint64_t compute_zob_key(position_t* p);
 
-square_t square_of(fil_t f, rnk_t r);
-fil_t fil_of(square_t sq);
-rnk_t rnk_of(square_t sq);
-int square_to_str(square_t sq, char* buf, size_t bufsize);
+// Original prototypes before static inlining
+// square_t square_of(fil_t f, rnk_t r);
+// fil_t fil_of(square_t sq);
+// rnk_t rnk_of(square_t sq);
+// int square_to_str(square_t sq, char* buf, size_t bufsize);
+
+// For no square, use 0, which is guaranteed to be off board
+static inline square_t square_of(fil_t f, rnk_t r) {
+  square_t s = ARR_WIDTH * (FIL_ORIGIN + f) + RNK_ORIGIN + r;
+  DEBUG_LOG(1, "Square of (file %d, rank %d) is %d\n", f, r, s);
+  tbassert((s >= 0) && (s < ARR_SIZE), "s: %d\n", s);
+  return s;
+}
+
+// Finds file of square
+static inline fil_t fil_of(square_t sq) {
+  fil_t f = ((sq >> FIL_SHIFT) & FIL_MASK) - FIL_ORIGIN;
+  DEBUG_LOG(1, "File of square %d is %d\n", sq, f);
+  return f;
+}
+
+// Finds rank of square
+static inline rnk_t rnk_of(square_t sq) {
+  rnk_t r = ((sq >> RNK_SHIFT) & RNK_MASK) - RNK_ORIGIN;
+  DEBUG_LOG(1, "Rank of square %d is %d\n", sq, r);
+  return r;
+}
+
+// converts a square to string notation, returns number of characters printed
+static inline int square_to_str(square_t sq, char* buf, size_t bufsize) {
+  fil_t f = fil_of(sq);
+  rnk_t r = rnk_of(sq);
+  if (f >= 0) {
+    return snprintf(buf, bufsize, "%c%d", 'a' + f, r);
+  } else  {
+    return snprintf(buf, bufsize, "%c%d", 'z' + f + 1, r);
+  }
+}
 
 int dir_of(int i);
 int beam_of(int direction);
