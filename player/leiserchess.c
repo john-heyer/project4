@@ -70,6 +70,9 @@ extern int USE_KO;
 extern int USE_TT;
 extern int HASH;
 
+// whether to use opening book
+int USE_OB;
+
 // flag that can be set via uci setoption command that will reset the rng to default
 //   seeds. This is useful for running benchmarks for changes that only impact performance.
 extern int RESET_RNG;
@@ -111,6 +114,7 @@ static int_options iopts[] = {
   { "detect_draws",   &DETECT_DRAWS,   1,                     0,              1             },
   { "use_tt",               &USE_TT,   1,                     0,              1             },
   { "use_ko",               &USE_KO,   1,                     0,              1             },
+  { "use_ob",               &USE_OB,   1,                     0,              1             },
   { "trace_moves",     &TRACE_MOVES,   0,                     0,              1             },
   { "",                        NULL,   0,                     0,              0             }
 };
@@ -230,7 +234,6 @@ char* try_lookup_table(position_t* p) {
 
 void entry_point(entry_point_args* args, entry_point_ret* ret) {
   move_t subpv[MAX_PLY_IN_SEARCH];
-
   int depth = args->depth;
   position_t* p = args->p;
   double tme = args->tme;
@@ -246,7 +249,7 @@ void entry_point(entry_point_args* args, entry_point_ret* ret) {
   init_tics();
 
   // Try using the move lookup table if our ply is less than the depth of the table
-  if (p->ply < OPEN_BOOK_DEPTH) {
+  if (p->ply < OPEN_BOOK_DEPTH && USE_OB) {
     char *lookup_best_move = try_lookup_table(p);
     
     // A best move from the lookup table was found. Return immediately!
