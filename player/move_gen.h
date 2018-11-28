@@ -42,6 +42,32 @@ typedef int fil_t;
 #define RNK_SHIFT 0
 #define RNK_MASK 15
 
+static fil_t SQR_FIL[ARR_SIZE] = {
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+  3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+  4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+  5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+  6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+  7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+  8, 8, 8, 8, 8, 8, 8, 8, 8, 8
+};
+
+static rnk_t SQR_RNK[ARR_SIZE] = {
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+  -1, 0, 1, 2, 3, 4, 5, 6, 7, 8
+};
+
 // -----------------------------------------------------------------------------
 // Pieces
 // -----------------------------------------------------------------------------
@@ -245,7 +271,7 @@ static inline fil_t fil_of_reference(square_t sq) {
 
 // Finds file of square
 static inline fil_t fil_of(square_t sq) {
-  fil_t f = sq / ARR_WIDTH - FIL_ORIGIN;
+  fil_t f = SQR_FIL[sq];
   DEBUG_LOG(1, "File of square %d is %d\n", sq, f);
 
   // N.B. This regression is incorrect for 10x10 board, only correct for 16x16 board
@@ -263,7 +289,7 @@ static inline rnk_t rnk_of_reference(square_t sq) {
 
 // Finds rank of square
 static inline rnk_t rnk_of(square_t sq) {
-  rnk_t r = sq % ARR_WIDTH - RNK_ORIGIN;
+  rnk_t r = SQR_RNK[sq];
   DEBUG_LOG(1, "Rank of square %d is %d\n", sq, r);
   // N.B. This regression is incorrect for 10x10 board, only correct for 16x16 board
   // tbassert(((rnk_t) r) == rnk_of_reference(sq),
