@@ -8,7 +8,7 @@ import numpy as np
 
 SCALE_DOWN_FACTOR = 10000.0
 
-regression_binary = './leiserchess_beta1_v2'
+regression_binary = './leiserchess_beta1_v3'
 binary = './leiserchess'
 
 if len(sys.argv) == 0:
