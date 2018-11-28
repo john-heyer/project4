@@ -1,3 +1,4 @@
+setoption name use_ob value 0
 setoption name reset_rng value 1
-go depth 8
+go depth 3
 quit
