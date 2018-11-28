@@ -282,18 +282,116 @@ static inline int square_to_str(square_t sq, char* buf, size_t bufsize) {
   }
 }
 
-int dir_of(int i);
-int beam_of(int direction);
-int reflect_of(int beam_dir, int pawn_ori);
+// Original prototypes before inlining
+// int dir_of(int i);
+// int beam_of(int direction);
+// int reflect_of(int beam_dir, int pawn_ori);
 
-ptype_t ptype_mv_of(move_t mv);
-square_t from_square(move_t mv);
-square_t intermediate_square(move_t mv);
-square_t to_square(move_t mv);
-rot_t rot_of(move_t mv);
-move_t move_of(ptype_t typ, rot_t rot, square_t from_sq,
-               square_t intermediate_sq, square_t to_sq);
-void move_to_str(move_t mv, char* buf, size_t bufsize);
+// direction map
+static int dir[8] = { -ARR_WIDTH - 1, -ARR_WIDTH, -ARR_WIDTH + 1, -1, 1,
+                      ARR_WIDTH - 1, ARR_WIDTH, ARR_WIDTH + 1
+                    };
+static inline int dir_of(int i) {
+  tbassert(i >= 0 && i < 8, "i: %d\n", i);
+  return dir[i];
+}
+
+
+// directions for laser: NN, EE, SS, WW
+static int beam[NUM_ORI] = {1, ARR_WIDTH, -1, -ARR_WIDTH};
+
+static inline int beam_of(int direction) {
+  tbassert(direction >= 0 && direction < NUM_ORI, "dir: %d\n", direction);
+  return beam[direction];
+}
+
+// reflect[beam_dir][pawn_orientation]
+// -1 indicates back of Pawn
+static int reflect[NUM_ORI][NUM_ORI] = {
+  //  NW  NE  SE  SW
+  { -1, -1, EE, WW},   // NN
+  { NN, -1, -1, SS},   // EE
+  { WW, EE, -1, -1 },  // SS
+  { -1, NN, SS, -1 }   // WW
+};
+
+static inline int reflect_of(int beam_dir, int pawn_ori) {
+  tbassert(beam_dir >= 0 && beam_dir < NUM_ORI, "beam-dir: %d\n", beam_dir);
+  tbassert(pawn_ori >= 0 && pawn_ori < NUM_ORI, "pawn-ori: %d\n", pawn_ori);
+  return reflect[beam_dir][pawn_ori];
+}
+
+// Original prototypes
+// ptype_t ptype_mv_of(move_t mv);
+// square_t from_square(move_t mv);
+// square_t intermediate_square(move_t mv);
+// square_t to_square(move_t mv);
+// rot_t rot_of(move_t mv);
+// move_t move_of(ptype_t typ, rot_t rot, square_t from_sq,
+//                square_t intermediate_sq, square_t to_sq);
+// void move_to_str(move_t mv, char* buf, size_t bufsize);
+
+static inline ptype_t ptype_mv_of(move_t mv) {
+  return (ptype_t)((mv >> PTYPE_MV_SHIFT) & PTYPE_MV_MASK);
+}
+
+static inline square_t from_square(move_t mv) {
+  return (mv >> FROM_SHIFT) & FROM_MASK;
+}
+
+static inline square_t intermediate_square(move_t mv) {
+  return (mv >> INTERMEDIATE_SHIFT) & INTERMEDIATE_MASK;
+}
+
+static inline square_t to_square(move_t mv) {
+  return (mv >> TO_SHIFT) & TO_MASK;
+}
+
+static inline rot_t rot_of(move_t mv) {
+  return (rot_t)((mv >> ROT_SHIFT) & ROT_MASK);
+}
+
+static inline move_t move_of(ptype_t typ, rot_t rot, square_t from_sq, square_t int_sq, square_t to_sq) {
+  return ((typ & PTYPE_MV_MASK) << PTYPE_MV_SHIFT) |
+         ((rot & ROT_MASK) << ROT_SHIFT) |
+         ((from_sq & FROM_MASK) << FROM_SHIFT) |
+         ((int_sq & INTERMEDIATE_MASK) << INTERMEDIATE_SHIFT) |
+         ((to_sq & TO_MASK) << TO_SHIFT);
+}
+
+// converts a move to string notation for FEN
+static inline void move_to_str(move_t mv, char* buf, size_t bufsize) {
+  square_t f = from_square(mv);  // from-square
+  square_t i = intermediate_square(mv); //int-square
+  square_t t = to_square(mv);    // to-square
+  rot_t r = rot_of(mv);          // rotation
+  const char* orig_buf = buf;
+
+  buf += square_to_str(f, buf, bufsize);
+  if (f != i) {
+    buf += square_to_str(i, buf, bufsize - (buf - orig_buf));
+  }
+  if (i != t) {
+    buf += square_to_str(t, buf, bufsize - (buf - orig_buf));
+  }
+
+  switch (r) {
+    case NONE:
+      break;
+    case RIGHT:
+      buf += snprintf(buf, bufsize - (buf - orig_buf), "R");
+      break;
+    case UTURN:
+      buf += snprintf(buf, bufsize - (buf - orig_buf), "U");
+      break;
+    case LEFT:
+      buf += snprintf(buf, bufsize - (buf - orig_buf), "L");
+      break;
+    default:
+      tbassert(false, "Whoa, now.  Whoa, I say.\n");  // Bad, bad, bad
+      break;
+  }
+}
 
 int generate_all(position_t* p, sortable_move_t* sortable_move_list,
                  bool strict);
@@ -303,12 +401,45 @@ void low_level_make_move(position_t* old, position_t* p, move_t mv);
 victims_t make_move(position_t* old, position_t* p, move_t mv);
 void display(position_t* p);
 
-victims_t KO();
-victims_t ILLEGAL();
+// -----------------------------------------------------------------------------
+// Ko and illegal move signalling
+// -----------------------------------------------------------------------------
 
-bool is_ILLEGAL(victims_t victims);
-bool is_KO(victims_t victims);
-bool zero_victims(victims_t victims);
-bool victim_exists(victims_t victims);
+// Original prototypes before static inlining
+// victims_t KO();
+// victims_t ILLEGAL();
+
+// bool is_ILLEGAL(victims_t victims);
+// bool is_KO(victims_t victims);
+// bool zero_victims(victims_t victims);
+// bool victim_exists(victims_t victims);
+
+static inline victims_t KO() {
+  return ((victims_t) {
+    KO_ZAPPED, 0
+  });
+}
+
+static inline victims_t ILLEGAL() {
+  return ((victims_t) {
+    ILLEGAL_ZAPPED, 0
+  });
+}
+
+static inline bool is_KO(victims_t victims) {
+  return (victims.zapped_count == KO_ZAPPED);
+}
+
+static inline bool is_ILLEGAL(victims_t victims) {
+  return (victims.zapped_count == ILLEGAL_ZAPPED);
+}
+
+static inline bool zero_victims(victims_t victims) {
+  return (victims.zapped_count == 0);
+}
+
+static inline bool victim_exists(victims_t victims) {
+  return (victims.zapped_count > 0);
+}
 
 #endif  // MOVE_GEN_H

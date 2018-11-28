@@ -2,9 +2,8 @@ import os
 import re
 import sys
 
-def get_txt(executable, book='../tests/book.dta', rounds=2, depth=3):
+def get_txt(executable, rounds=2, depth=3):
     return '''cpus = 2
-book = %s
 game_rounds = %d
 title = basic
 adjudicate = 400
@@ -19,7 +18,7 @@ depth = %d
 player = player2
 invoke = %s
 depth = %d
-''' % (book, rounds, executable, depth, executable, depth)
+''' % (rounds, executable, depth, executable, depth)
 
 def text_to_file(filename, text):
     with open(filename, 'w') as text_file:
