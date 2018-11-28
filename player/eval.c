@@ -296,18 +296,32 @@ float laser_coverage(position_t* p, float * coverage_map, color_t color) {
   int num_moves = generate_all_with_color(p, moves, color);
   int i;
 
+  char virgin_coverage_map[ARR_SIZE];
+
   // initialization
   for (int i = 0; i < ARR_SIZE; ++i) {
     coverage_map[i] = FLT_MAX;
+    virgin_coverage_map[i] = 0;
   }
+
+  mark_laser_path(p, color, virgin_coverage_map, 1);
+
+  int set_normal = 0;
 
   // increment laser path for each possible move
   for(i = 0; i < num_moves; i++) {
     move_t mv = get_move(moves[i]);
 
-    low_level_make_move(p, &np, mv); // make the move
+    square_t fsquare = from_square(mv);
+    square_t isquare = intermediate_square(mv);
+    square_t tsquare = to_square(mv);
+    int modified_path = virgin_coverage_map[fsquare] == 1 || virgin_coverage_map[isquare] == 1 || virgin_coverage_map[tsquare] == 1;
 
-    add_laser_path(&np, color, coverage_map);  // increment laser path
+    if (modified_path || (set_normal == 0)) {
+        low_level_make_move(p, &np, mv); // make the move
+        add_laser_path(&np, color, coverage_map);  // increment laser path
+        set_normal |= (modified_path == 0); // Set to 1 if have already added laser path corresponding to unperturbed laser trajectory.
+    }
   }
 
   // get square of opposing king

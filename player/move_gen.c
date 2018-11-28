@@ -140,18 +140,6 @@ ptype_t ptype_mv_of(move_t mv) {
   return (ptype_t)((mv >> PTYPE_MV_SHIFT) & PTYPE_MV_MASK);
 }
 
-square_t from_square(move_t mv) {
-  return (mv >> FROM_SHIFT) & FROM_MASK;
-}
-
-square_t intermediate_square(move_t mv) {
-  return (mv >> INTERMEDIATE_SHIFT) & INTERMEDIATE_MASK;
-}
-
-square_t to_square(move_t mv) {
-  return (mv >> TO_SHIFT) & TO_MASK;
-}
-
 rot_t rot_of(move_t mv) {
   return (rot_t)((mv >> ROT_SHIFT) & ROT_MASK);
 }
