@@ -6,7 +6,7 @@ import numpy as np
 # EXAMPLE USAGE: python perf_test.py false 
 #			or : python perf_test.py true
 
-SCALE_DOWN_FACTOR = 10000.0
+SCALE_DOWN_FACTOR = 1.0
 
 regression_binary = './leiserchess_beta1_v3'
 binary = './leiserchess'
@@ -40,8 +40,8 @@ for i, l1 in enumerate(lines1):
 		try:		
 			nodes1 = int(re.findall("nodes\s[0-9]+", l1)[0].split(" ")[-1])
 			nodes2 = int(re.findall("nodes\s[0-9]+", l2)[0].split(" ")[-1])
-			nps_regression.append(int(re.findall("nps\s[0-9]+", l1)[0].split(" ")[-1])/SCALE_DOWN_FACTOR)
-			nps_new.append(int(re.findall("nps\s[0-9]+", l2)[0].split(" ")[-1])/SCALE_DOWN_FACTOR)
+			nps_regression.append(int(re.findall("[(]microsec[)]\s[0-9]+", l1)[0].split(" ")[-1])/SCALE_DOWN_FACTOR)
+			nps_new.append(int(re.findall("[(]microsec[)]\s[0-9]+", l2)[0].split(" ")[-1])/SCALE_DOWN_FACTOR)
 			if (nodes1 != nodes2): # it's fine if nps or other things do not match
 				bad = True
 				print(nodes1)
@@ -62,13 +62,13 @@ percentage_change = (float(geo_mean_new) / float(geo_mean_regression))* 100
 
 if (not bad):
 	print("========== REGRESSION PASSED ==========")
-	print("OLD GEO MEAN NPS SCORE: " + str(geo_mean_regression))
-	print("NEW GEO MEAN NPS SCORE: " + str(geo_mean_new))
+	print("OLD GEO MEAN MICROSEC SCORE: " + str(geo_mean_regression))
+	print("NEW GEO MEAN MICROSEC SCORE: " + str(geo_mean_new))
 	print(str(percentage_change - 100) + " % Change")
 else:
 	print("========== REGRESSION FAILURE ==========")
-	print("OLD GEO MEAN NPS SCORE: " + str(geo_mean_regression))
-	print("NEW GEO MEAN NPS SCORE: " + str(geo_mean_new))
+	print("OLD GEO MEAN MICROSEC SCORE: " + str(geo_mean_regression))
+	print("NEW GEO MEAN MICROSEC SCORE: " + str(geo_mean_new))
 	print(str(percentage_change - 100) + " % Change")
 
 os.remove('temp_binary.txt')

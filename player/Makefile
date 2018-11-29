@@ -38,7 +38,7 @@ include cilkutils.mk
 ifeq ($(DEBUG),1)
 	CFLAGS += -O0 -DDEBUG $(PFLAG)
 else
-	CFLAGS += -O3 -fcilkplus -DNDEBUG $(PFLAG)
+	CFLAGS += -O3 -fcilkplus -DNDEBUG $(PFLAG) -flto -mavx2 -ffast-math
 endif
 
 ifeq ($(REFERENCE),1)
@@ -47,7 +47,7 @@ endif
 
 CFLAGS += $(OTHER_CFLAGS)
 
-LDFLAGS= -Wall -lm -lrt -ldl -lpthread -lcilkrts
+LDFLAGS= -Wall -lm -lrt -ldl -lpthread -lcilkrts -flto -fuse-ld=gold 
 
 .PHONY : default clean
 
