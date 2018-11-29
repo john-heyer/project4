@@ -145,10 +145,22 @@ static score_t searchPV(searchNode* node, int depth, uint64_t* node_count_serial
   int num_moves_tried = 0;
 
   // Insertion sort the move list.
-  sort_insertion(move_list, num_of_moves);
+  // sort_insertion(move_list, num_of_moves);
+  const int k = 1;
+  if (k >= num_of_moves) {
+    sort_insertion(move_list, num_of_moves);
+  }
+  else {
+    sort_k_largest(move_list, num_of_moves, k);
+  }
 
   // Start searching moves.
   for (int mv_index = 0; mv_index < num_of_moves; mv_index++) {
+    if (mv_index == k) {
+      sort_moves(move_list + k, num_of_moves - k);
+      // sort_insertion(move_list + k, num_of_moves - k);
+      // quickSort(move_list + k, 0, num_of_moves - k-1);
+    }
     move_t mv = get_move(move_list[mv_index]);
 
     num_moves_tried++;

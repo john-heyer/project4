@@ -37,6 +37,7 @@ typedef uint32_t sort_key_t;
 static const uint64_t SORT_MASK = (1ULL << 32) - 1;
 static const int SORT_SHIFT = 32;
 
+#define SORT_THRESHOLD 20
 /*
 static sort_key_t sort_key(sortable_move_t mv) {
   return (sort_key_t) ((mv >> SORT_SHIFT) & SORT_MASK);
@@ -354,6 +355,54 @@ void sort_insertion(sortable_move_t* move_list, int num_of_moves) {
     }
     move_list[hole] = insert;
   }
+}
+
+static inline void swap(sortable_move_t* move_list, int i, int j) {
+  sortable_move_t temp = move_list[i];
+  move_list[i] = move_list[j];
+  move_list[j] = temp;
+}
+
+inline void sort_k_largest(sortable_move_t* move_list, int num_of_moves, const int k) {
+    for(int i=0; i < k; i++) {
+        int max_id = -1;
+        for(int j = i; j < num_of_moves; j++) {
+            if (max_id == -1 || move_list[j] > move_list[max_id]) {
+                max_id = j;
+            }
+        }
+        swap(move_list, i, max_id);
+    }
+}
+
+int partition(sortable_move_t* move_list, int low, int high) {
+  sortable_move_t pivot = move_list[high];
+  int i = low - 1;
+  for (int j = low; j <= high- 1; j++) { 
+    if (move_list[j] >= pivot) { 
+        i++;
+        swap(move_list, i, j);
+    }
+  } 
+  swap(move_list, i+1, high); 
+  return (i + 1); 
+}
+
+void quick_sort(sortable_move_t* move_list, int low, int high) {
+  if (low < high) {
+    int delta = high - low;
+    if (delta < SORT_THRESHOLD) {
+      sort_insertion(move_list + low, delta + 1);
+      return;
+    }
+    int p = partition(move_list, low, high);
+    quick_sort(move_list, low, p-1);
+    quick_sort(move_list, p+1, high);
+  }
+}
+
+void sort_moves(sortable_move_t* move_list, int num_of_moves) {
+  quick_sort(move_list, 0, num_of_moves - 1);
 }
 
 // Returns true if a cutoff was triggered, false otherwise.

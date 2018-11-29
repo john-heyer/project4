@@ -91,9 +91,21 @@ static score_t scout_search(searchNode* node, int depth,
   init_simple_mutex(&node_mutex);
 
   // Sort the move list.
-  sort_insertion(move_list, num_of_moves);
+  // sort_insertion(move_list, num_of_moves);
+  const int k = 1;
+  if (k >= num_of_moves) {
+    sort_insertion(move_list, num_of_moves);
+  }
+  else {
+    sort_k_largest(move_list, num_of_moves, k);
+  }
 
   for (int mv_index = 0; mv_index < num_of_moves; mv_index++) {
+    if (mv_index == k) {
+      sort_moves(move_list + k, num_of_moves - k);
+      // sort_insertion(move_list + k, num_of_moves - k);
+      // quickSort(move_list + k, 0, num_of_moves - k-1);
+    }
     // Get the next move from the move list.
     int local_index = number_of_moves_evaluated++;
     move_t mv = get_move(move_list[local_index]);
